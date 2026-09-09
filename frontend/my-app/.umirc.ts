@@ -7,30 +7,24 @@ export default defineConfig({
   initialState: {},
   request: {},
   layout: {
-    title: '@umijs/max',
+    title: 'Sistema de Mantenimiento Predictivo',
   },
   routes: [
     {
       path: '/',
-      redirect: '/home',
+      redirect: '/dashboard',
     },
     {
-      name: '首页',
-      path: '/home',
-      component: './Home',
+      path: '/login',
+      component: './Login',
+      layout: false,
     },
     {
-      name: '权限演示',
-      path: '/access',
-      component: './Access',
-    },
-    {
-      name: ' CRUD 示例',
-      path: '/table',
-      component: './Table',
+      name: 'Dashboard',
+      path: '/dashboard',
+      component: './Dashboard',
+      access: 'canTechnician', // requiere estar autenticado (rol mínimo técnico)
     },
   ],
   npmClient: 'pnpm',
-  utoopack: {},
 });
-
