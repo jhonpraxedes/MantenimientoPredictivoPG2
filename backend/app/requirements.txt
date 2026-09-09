@@ -1,0 +1,21 @@
+# FastAPI y servidor ASGI
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# ORM y base de datos
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9        # driver PostgreSQL (usa psycopg2 en producción)
+alembic>=1.13.0               # migraciones de esquema
+
+# Variables de entorno
+python-dotenv>=1.0.0
+
+# Seguridad
+passlib[bcrypt]>=1.7.4        # hashing de contraseñas
+python-jose[cryptography]>=3.3.0  # JWT
+
+# Validación de email
+email-validator>=2.1.0        # requerido por pydantic EmailStr
+
+# Formularios OAuth2
+python-multipart>=0.0.9       # requerido por OAuth2PasswordRequestForm
