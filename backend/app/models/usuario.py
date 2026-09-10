@@ -5,7 +5,7 @@ import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, Enum, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -35,6 +35,8 @@ class Usuario(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-
+    lecturas: Mapped[list["LecturaSensor"]] = relationship(
+        "LecturaSensor", back_populates="usuario"
+    )
     def __repr__(self) -> str:
         return f"<Usuario id={self.id} email={self.email!r} rol={self.rol}>"
