@@ -8,7 +8,6 @@ Endpoints:
 """
 from datetime import datetime
 from typing import List
-
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.deps import CurrentUser, DbSession
@@ -16,6 +15,9 @@ from app.models.lectura_sensor import LecturaSensor
 from app.models.maquinaria import EstadoMaquinaria, Maquinaria
 from app.schemas.lectura_sensor import LecturaSensorCreate, LecturaSensorOut
 
+from sqlalchemy import select 
+from app.models.alerta import Alerta, EstadoAlerta, OrigenAlerta 
+from app.services.ia_diagnostico import evaluar_lectura_con_ia
 router = APIRouter(prefix="/lecturas", tags=["Lecturas de Sensor"])
 
 
@@ -57,7 +59,37 @@ def crear_lectura(
     db.commit()
     db.refresh(nueva_lectura)
 
-    # TODO Sprint 3: invocar aquí la evaluación con IA (CU-05)
+    try:
+        stmt_historial = (
+            select(LecturaSensor)
+            .where(
+                LecturaSensor.maquinaria_id == nueva_lectura.maquinaria_id,
+                LecturaSensor.id != nueva_lectura.id,
+            )
+            .order_by(LecturaSensor.fecha_hora.desc())
+            .limit(5)
+        )
+        historial = list(db.scalars(stmt_historial).all())
+
+        resultado_ia = evaluar_lectura_con_ia(
+            lectura_actual=nueva_lectura,
+            historial=historial,
+            maquinaria=maquinaria,
+        )
+
+        alerta = Alerta(
+            lectura_id=nueva_lectura.id,
+            maquinaria_id=nueva_lectura.maquinaria_id,
+            estado=EstadoAlerta(resultado_ia["estado"]),
+            diagnostico=resultado_ia["diagnostico"],
+            origen=OrigenAlerta(resultado_ia["origen"]),
+        )
+        db.add(alerta)
+        db.commit()
+        db.refresh(nueva_lectura)
+
+    except Exception as exc:
+        print(f"[lecturas.py] ERROR inesperado al evaluar con IA: {exc!r}")
 
     return nueva_lectura
 

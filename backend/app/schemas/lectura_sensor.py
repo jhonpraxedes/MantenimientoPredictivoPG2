@@ -6,6 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, field_validator
 
+from app.schemas.alerta import AlertaOut
 
 _MENSAJE_RANGO = "Verifique los valores de sensores ingresados; están fuera de rango operativo"
 
@@ -59,5 +60,5 @@ class LecturaSensorOut(LecturaSensorBase):
     id: int
     usuario_id: int
     fecha_hora: datetime
-
+    alerta: AlertaOut | None = None
     model_config = {"from_attributes": True}

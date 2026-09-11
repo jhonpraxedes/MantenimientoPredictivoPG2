@@ -34,3 +34,4 @@ class Maquinaria(Base):
 
     # Relación inversa: lecturas asociadas a esta máquina
     lecturas = relationship("LecturaSensor", back_populates="maquinaria")
+    alertas = relationship("Alerta", back_populates="maquinaria", cascade="all, delete-orphan")

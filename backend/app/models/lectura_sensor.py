@@ -9,7 +9,6 @@ from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
-
 class LecturaSensor(Base):
     __tablename__ = "lecturas_sensores"
 
@@ -34,3 +33,4 @@ class LecturaSensor(Base):
     # Relaciones ORM
     maquinaria = relationship("Maquinaria", back_populates="lecturas")
     usuario = relationship("Usuario", back_populates="lecturas")
+    alerta = relationship("Alerta", back_populates="lectura", uselist=False, cascade="all, delete-orphan")
