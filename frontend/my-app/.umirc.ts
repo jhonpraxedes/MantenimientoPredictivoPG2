@@ -23,7 +23,22 @@ export default defineConfig({
       name: 'Dashboard',
       path: '/dashboard',
       component: './Dashboard',
-      access: 'canTechnician', // requiere estar autenticado (rol mínimo técnico)
+      access: 'estaAutenticado',
+      icon: 'DashboardOutlined',
+    },
+    {
+      name: 'Maquinaria',
+      path: '/maquinaria',
+      component: './Maquinaria',
+      access: 'estaAutenticado',
+      icon: 'ToolOutlined',
+    },
+    {
+      name: 'Lecturas',
+      path: '/lecturas',
+      component: './Lecturas',
+      access: 'estaAutenticado',
+      icon: 'LineChartOutlined',
     },
   ],
   npmClient: 'pnpm',

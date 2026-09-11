@@ -161,3 +161,35 @@ def desactivar_maquinaria(
     db.commit()
     db.refresh(maquinaria)
     return maquinaria
+
+# ---------------------------------------------------------------------------
+# PATCH /{id}/activar — Reactivación
+# ---------------------------------------------------------------------------
+
+@router.patch(
+    "/{maquinaria_id}/activar",
+    response_model=MaquinariaOut,
+    dependencies=[Depends(require_role(*_ROLES_GESTION))],
+)
+def activar_maquinaria(
+    maquinaria_id: int,
+    db: DbSession,
+    _: CurrentUser,
+):
+    """Reactiva una máquina previamente desactivada."""
+    maquinaria = db.query(Maquinaria).filter(Maquinaria.id == maquinaria_id).first()
+    if not maquinaria:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Maquinaria no encontrada",
+        )
+    if maquinaria.estado == EstadoMaquinaria.activo:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El equipo ya se encuentra activo",
+        )
+
+    maquinaria.estado = EstadoMaquinaria.activo
+    db.commit()
+    db.refresh(maquinaria)
+    return maquinaria
