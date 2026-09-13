@@ -13,6 +13,14 @@ import { API_BASE_URL } from '@/services/auth';
 // Interfaces TypeScript
 // ─────────────────────────────────────────────
 
+/** Alerta de diagnóstico generada por IA o por reglas tras una lectura */
+export interface AlertaResultado {
+  estado: 'normal' | 'advertencia' | 'critico';
+  diagnostico: string;
+  origen: 'ia' | 'reglas';
+  fecha_generacion: string; // ISO 8601
+}
+
 /** Lectura de sensor devuelta por el backend (GET /api/v1/lecturas/) */
 export interface LecturaSensor {
   id: number;
@@ -24,6 +32,8 @@ export interface LecturaSensor {
   horas_uso: number;
   observaciones: string | null;
   fecha_hora: string; // ISO 8601, ej. "2024-05-10T14:30:00"
+  /** Alerta asociada, disponible solo en la respuesta de POST (creación) */
+  alerta?: AlertaResultado;
 }
 
 /** Payload para crear una nueva lectura (POST /api/v1/lecturas/) */
@@ -70,6 +80,7 @@ export async function listarLecturas(
 
 /**
  * Crea una nueva lectura de sensor.
+ * La respuesta incluye el campo opcional "alerta" con el diagnóstico de IA.
  *
  * @param payload - Datos de la lectura a registrar
  */

@@ -8,6 +8,7 @@ Endpoints:
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.core.security import create_access_token, verify_password
 from app.deps import CurrentUser, get_db
@@ -29,8 +30,8 @@ def _authenticate_user(db: Session, email: str, password: str) -> Usuario:
         HTTPException 401: si las credenciales son incorrectas o el usuario
                            está inactivo.
     """
-    usuario: Usuario | None = (
-        db.query(Usuario).filter(Usuario.email == email).first()
+    usuario: Usuario | None = ( 
+        db.query(Usuario).filter(func.lower(Usuario.email) == email.lower()).first() 
     )
     invalid_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

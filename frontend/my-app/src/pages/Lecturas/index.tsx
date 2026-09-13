@@ -12,6 +12,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Alert,
   Button,
   Card,
   Col,
@@ -23,12 +24,14 @@ import {
   Select,
   Space,
   Table,
+  Tag,
   Typography,
 } from 'antd';
 import { LineChartOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { listarMaquinaria, Maquinaria } from '@/services/maquinaria';
 import {
+  AlertaResultado,
   crearLectura,
   FastApiValidationError,
   LecturaPayload,
@@ -77,6 +80,9 @@ const LecturasPage: React.FC = () => {
 
   const [filtroMaquinaId, setFiltroMaquinaId] = useState<number | undefined>(undefined);
   const [enviando, setEnviando] = useState<boolean>(false);
+
+  /** Alerta del diagnóstico de la última lectura registrada (null = ninguna aún) */
+  const [ultimaAlerta, setUltimaAlerta] = useState<AlertaResultado | null>(null);
 
   const [form] = Form.useForm<LecturaPayload>();
 
@@ -136,8 +142,10 @@ const LecturasPage: React.FC = () => {
   const handleEnviar = async (values: LecturaPayload): Promise<void> => {
     setEnviando(true);
     try {
-      await crearLectura(values);
+      const lecturaCreada = await crearLectura(values);
       message.success('Lectura registrada correctamente.');
+      // Guardar la alerta recibida (reemplaza la anterior, no acumula)
+      setUltimaAlerta(lecturaCreada.alerta ?? null);
       form.resetFields();
       // Recargar historial (con el filtro activo)
       await cargarLecturas(filtroMaquinaId);
@@ -151,9 +159,7 @@ const LecturasPage: React.FC = () => {
         // Error de validación de rango desde FastAPI
         const detalle = httpError?.response?.data?.detail;
         if (Array.isArray(detalle) && detalle.length > 0) {
-          const msgs = detalle
-  .map((d) => d.msg.replace(/^Value error,\s*/i, ''))
-  .join(' | ');
+          const msgs = detalle.map((d) => d.msg).join(' | ');
           message.error(`Error de validación: ${msgs}`);
         } else {
           message.error('Los datos de la lectura están fuera del rango permitido.');
@@ -216,6 +222,30 @@ const LecturasPage: React.FC = () => {
       align: 'right',
     },
     {
+      title: 'Estado IA',
+      dataIndex: 'alerta',
+      key: 'estado_alerta',
+      width: 120,
+      render: (alerta: LecturaFila['alerta']) => {
+        if (!alerta) return <Text type="secondary">—</Text>;
+        const color =
+          alerta.estado === 'normal' ? 'success' :
+          alerta.estado === 'advertencia' ? 'warning' : 'error';
+        const etiqueta =
+          alerta.estado === 'normal' ? 'Normal' :
+          alerta.estado === 'advertencia' ? 'Advertencia' : 'Crítico';
+        return <Tag color={color}>{etiqueta}</Tag>;
+      },
+    },
+    {
+      title: 'Diagnóstico IA',
+      dataIndex: 'alerta',
+      key: 'diagnostico_alerta',
+      ellipsis: true,
+      render: (alerta: LecturaFila['alerta']) =>
+        alerta ? alerta.diagnostico : <Text type="secondary">—</Text>,
+    },
+    {
       title: 'Observaciones',
       dataIndex: 'observaciones',
       key: 'observaciones',
@@ -237,6 +267,35 @@ const LecturasPage: React.FC = () => {
           Lecturas de Sensor
         </Title>
       </Space>
+
+      {/* Alert de diagnóstico de la última lectura registrada */}
+      {ultimaAlerta && (
+        <Alert
+          style={{ marginBottom: 16 }}
+          type={
+            ultimaAlerta.estado === 'normal'
+              ? 'success'
+              : ultimaAlerta.estado === 'advertencia'
+              ? 'warning'
+              : 'error'
+          }
+          showIcon
+          closable
+          onClose={() => setUltimaAlerta(null)}
+          message={
+            <span>
+              <strong>Diagnóstico IA: </strong>
+              {ultimaAlerta.diagnostico}
+              <Tag
+                color={ultimaAlerta.origen === 'ia' ? 'blue' : 'default'}
+                style={{ marginLeft: 10, fontSize: 11 }}
+              >
+                {ultimaAlerta.origen === 'ia' ? 'Generado por IA' : 'Generado por reglas'}
+              </Tag>
+            </span>
+          }
+        />
+      )}
 
       {/* Card: Formulario de nueva lectura */}
       <Card
