@@ -9,11 +9,14 @@ cffi==2.1.1
 charset-normalizer==3.5.1
 click==8.5.0
 cryptography==50.0.1
+defusedxml==0.7.1
 dnspython==2.8.0
 ecdsa==0.19.2
 email-validator==2.3.0
 fastapi==0.141.1
 fastavro==1.12.2
+fonttools==4.65.0
+fpdf2==2.8.8
 greenlet==3.5.5
 h11==0.16.0
 idna==3.19
@@ -23,6 +26,7 @@ numpy==2.5.3
 packaging==26.3
 pandas==3.0.5
 passlib==1.7.4
+pillow==12.3.0
 psycopg2-binary==2.9.12
 pyasn1==0.6.4
 pycparser==3.0
