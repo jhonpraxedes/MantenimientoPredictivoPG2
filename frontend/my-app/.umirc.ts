@@ -54,6 +54,20 @@ export default defineConfig({
       access: 'estaAutenticado',
       icon: 'LineChartOutlined',
     },
+    {
+    name: 'Usuarios',
+    path: '/usuarios',
+    component: './Usuarios',
+    access: 'esAdministrador',
+    icon: 'TeamOutlined',
+  },
+  {
+    name: 'Reportes',
+    path: '/reportes',
+    component: './Reportes',
+    access: 'esAdminOSupervisor',
+    icon: 'FilePdfOutlined',
+  },
   ],
   npmClient: 'pnpm',
 });

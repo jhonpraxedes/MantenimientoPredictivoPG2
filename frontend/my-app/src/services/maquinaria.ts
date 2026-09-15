@@ -77,6 +77,22 @@ export async function crearMaquinaria(
 }
 
 /**
+ * Actualiza los campos de una máquina existente.
+ *
+ * @param id - ID de la máquina a actualizar
+ * @param payload - Campos a modificar (todos opcionales)
+ */
+export async function actualizarMaquinaria(
+  id: number,
+  payload: Partial<MaquinariaPayload>,
+): Promise<Maquinaria> {
+  return request<Maquinaria>(`${API_BASE_URL}/api/v1/maquinaria/${id}`, {
+    method: 'PUT',
+    data: payload,
+  });
+}
+
+/**
  * Desactiva una máquina (cambia su estado a "inactivo").
  *
  * @param id - ID de la máquina a desactivar
