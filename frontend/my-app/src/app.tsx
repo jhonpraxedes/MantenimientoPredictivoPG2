@@ -9,6 +9,7 @@
 
 import { history, RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { message } from 'antd';
+import esES from 'antd/locale/es_ES';
 import {
   clearToken,
   getCurrentUser,
@@ -56,7 +57,7 @@ export const request: RequestConfig = {
 
   // ── Interceptores de REQUEST ──────────────────
   requestInterceptors: [
-    (config) => {
+    (config: any) => {
       const token = getToken();
       if (token) {
         // Añadimos el header Authorization a todas las peticiones salientes
@@ -114,7 +115,44 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
   return {
     // ── Identidad del sistema ──────────────────
     title: 'Sistema de Mantenimiento Predictivo',
-    logo: '/logo.png', // ajusta la ruta si tienes otro logo
+
+menuHeaderRender: () => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '16px 8px',
+      gap: 8,
+      textAlign: 'center',
+      width: '100%',
+    }}
+  >
+    <img
+      src="/logo.svg"
+      alt="logo"
+      style={{
+        width: 64,
+        height: 64,
+        objectFit: 'contain',
+      }}
+    />
+
+    <span
+      style={{
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 1.3,
+        whiteSpace: 'normal',
+        color: 'inherit',
+      }}
+    >
+      Sistema de Mantenimiento Predictivo
+    </span>
+  </div>
+),
+
 
     // ── Comportamiento de rutas ────────────────
     // Redirige al login si no hay usuario autenticado y la ruta no es pública
@@ -175,3 +213,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     // Las rutas con layout: false en config/routes.ts se excluyen automáticamente.
   };
 };
+export function antd(memo: any) {
+  memo.configProvider = memo.configProvider || {};
+  memo.configProvider.locale = esES;
+  return memo;
+}

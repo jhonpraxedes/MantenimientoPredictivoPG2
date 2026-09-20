@@ -4,8 +4,8 @@ export default defineConfig({
   theme: {
   
     token: {
-      colorPrimary: '#2563EB',
-      colorInfo: '#2563EB',
+      colorPrimary: '#8cb62286',
+      colorInfo: '#c3eb2591',
       colorBgLayout: '#F3F4F6',
       colorBgContainer: '#FFFFFF',
       colorBgElevated: '#FFFFFF',
@@ -69,5 +69,5 @@ export default defineConfig({
     icon: 'FilePdfOutlined',
   },
   ],
-  npmClient: 'pnpm',
+  npmClient: 'pnpm', locale: false,
 });
