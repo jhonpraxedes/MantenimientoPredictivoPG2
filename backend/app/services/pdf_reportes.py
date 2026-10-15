@@ -8,6 +8,10 @@ Funciones:
   generar_reporte_historico         – Historial de lecturas de una máquina.
 
 Ambas retornan bytes y relanzarán cualquier error interno como RuntimeError.
+
+NOTA: Se usa la fuente Helvetica (solo latin-1). Todo texto pasa por _limpiar()
+para reemplazar caracteres fuera de latin-1 (rayas largas, flechas, comillas
+curvas, etc.), incluido el texto generado por la IA.
 """
 
 from datetime import datetime
@@ -38,10 +42,39 @@ ESTADO_MAQ_LABEL: dict[str, str] = {
     "inactivo": "Inactivo",
 }
 
+# Caracteres fuera de latin-1 que suelen aparecer (sobre todo en texto de la IA)
+_REEMPLAZOS: dict[str, str] = {
+    "\u2014": "-",    # raya larga
+    "\u2013": "-",    # raya media
+    "\u2012": "-",
+    "\u2212": "-",    # signo menos
+    "\u2192": "->",   # flecha derecha
+    "\u2190": "<-",   # flecha izquierda
+    "\u2191": "(sube)",
+    "\u2193": "(baja)",
+    "\u2018": "'",
+    "\u2019": "'",
+    "\u201c": '"',
+    "\u201d": '"',
+    "\u2026": "...",
+    "\u2022": "-",    # viñeta
+    "\u2264": "<=",
+    "\u2265": ">=",
+    "\u00a0": " ",    # espacio duro
+}
+
 
 # ─────────────────────────────────────────────
 # Helpers internos
 # ─────────────────────────────────────────────
+
+def _limpiar(texto: object) -> str:
+    """Convierte a str y deja solo caracteres seguros para Helvetica (latin-1)."""
+    s = "" if texto is None else str(texto)
+    for original, reemplazo in _REEMPLAZOS.items():
+        s = s.replace(original, reemplazo)
+    return s.encode("latin-1", errors="replace").decode("latin-1")
+
 
 def _fecha_generacion() -> str:
     return datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -51,14 +84,14 @@ def _membrete(pdf: FPDF, subtitulo: str) -> None:
     """Escribe el encabezado estándar en el PDF."""
     pdf.set_font(FONT_FAMILY, "B", 14)
     pdf.set_text_color(*COLOR_HEADER)
-    pdf.cell(0, 8, SISTEMA_NOMBRE, ln=True, align="C")
+    pdf.cell(0, 8, _limpiar(SISTEMA_NOMBRE), ln=True, align="C")
 
     pdf.set_font(FONT_FAMILY, "B", 11)
-    pdf.cell(0, 7, subtitulo, ln=True, align="C")
+    pdf.cell(0, 7, _limpiar(subtitulo), ln=True, align="C")
 
     pdf.set_font(FONT_FAMILY, "", 9)
     pdf.set_text_color(*COLOR_NEGRO)
-    pdf.cell(0, 6, f"Generado: {_fecha_generacion()}", ln=True, align="C")
+    pdf.cell(0, 6, _limpiar(f"Generado: {_fecha_generacion()}"), ln=True, align="C")
     pdf.ln(4)
 
 
@@ -68,7 +101,7 @@ def _encabezado_tabla(pdf: FPDF, columnas: list[tuple[str, float]]) -> None:
     pdf.set_text_color(255, 255, 255)
     pdf.set_font(FONT_FAMILY, "B", 8)
     for texto, ancho in columnas:
-        pdf.cell(ancho, 7, texto, border=1, fill=True, align="C")
+        pdf.cell(ancho, 7, _limpiar(texto), border=1, fill=True, align="C")
     pdf.ln()
     pdf.set_text_color(*COLOR_NEGRO)
 
@@ -85,12 +118,13 @@ def _fila_tabla(
         pdf.set_fill_color(255, 255, 255)
     pdf.set_font(FONT_FAMILY, "", 8)
     for texto, ancho in celdas:
-        pdf.cell(ancho, 6, texto, border=1, fill=True)
+        pdf.cell(ancho, 6, _limpiar(texto), border=1, fill=True)
     pdf.ln()
 
 
 def _truncar(texto: str, max_chars: int = 40) -> str:
     """Recorta texto largo para que quepa en una celda."""
+    texto = _limpiar(texto)
     if len(texto) > max_chars:
         return texto[: max_chars - 3] + "..."
     return texto
@@ -134,7 +168,7 @@ def generar_reporte_estado_operativo(
                 if alerta
                 else "Sin evaluar"
             )
-            diagnostico = _truncar(alerta.diagnostico, 55) if alerta else "—"
+            diagnostico = _truncar(alerta.diagnostico, 55) if alerta else "-"
             estado_maq = ESTADO_MAQ_LABEL.get(
                 maq.estado.value if hasattr(maq.estado, "value") else str(maq.estado),
                 str(maq.estado),
@@ -142,8 +176,8 @@ def generar_reporte_estado_operativo(
 
             celdas: list[tuple[str, float]] = [
                 (_truncar(maq.nombre, 35),              60.0),
-                (maq.codigo_interno or "—",              35.0),
-                (_truncar(maq.tipo_equipo or "—", 28),  45.0),
+                (maq.codigo_interno or "-",              35.0),
+                (_truncar(maq.tipo_equipo or "-", 28),  45.0),
                 (estado_maq,                             30.0),
                 (estado_alerta,                          28.0),
                 (diagnostico,                            79.0),
@@ -152,7 +186,11 @@ def generar_reporte_estado_operativo(
 
         if not maquinarias:
             pdf.set_font(FONT_FAMILY, "I", 10)
-            pdf.cell(0, 10, "No se encontraron máquinas para el reporte.", ln=True, align="C")
+            pdf.cell(
+                0, 10,
+                _limpiar("No se encontraron máquinas para el reporte."),
+                ln=True, align="C",
+            )
 
         return bytes(pdf.output())
 
@@ -180,12 +218,15 @@ def generar_reporte_historico(
         pdf.add_page()
         pdf.set_margins(10, 10, 10)
 
-        _membrete(pdf, f"Historial de Diagnosticos-{maquinaria.nombre}")
+        _membrete(pdf, f"Historial de Diagnósticos - {maquinaria.nombre}")
 
         pdf.set_font(FONT_FAMILY, "", 9)
         pdf.cell(
             0, 5,
-            f"Codigo interno: {maquinaria.codigo_interno or '—'}    |    Tipo: {maquinaria.tipo_equipo or '—'}",
+            _limpiar(
+                f"Código interno: {maquinaria.codigo_interno or '-'}    |    "
+                f"Tipo: {maquinaria.tipo_equipo or '-'}"
+            ),
             ln=True,
         )
         pdf.ln(3)
@@ -193,11 +234,11 @@ def generar_reporte_historico(
         columnas: list[tuple[str, float]] = [
             ("Fecha y hora",          38.0),
             ("Temp. (°C)",            22.0),
-            ("Presion aceite (bar)",  30.0),
-            ("Vibracion (mm/s)",      28.0),
+            ("Presión aceite (bar)",  30.0),
+            ("Vibración (mm/s)",      28.0),
             ("Horas uso",             22.0),
             ("Estado alerta",         28.0),
-            ("Diagnostico",          109.0),
+            ("Diagnóstico",          109.0),
         ]
         _encabezado_tabla(pdf, columnas)
 
@@ -208,7 +249,7 @@ def generar_reporte_historico(
                 if alerta
                 else "Sin evaluar"
             )
-            diagnostico = _truncar(alerta.diagnostico, 75) if alerta else "—"
+            diagnostico = _truncar(alerta.diagnostico, 75) if alerta else "-"
 
             try:
                 fecha_str = lectura.fecha_hora.strftime("%d/%m/%Y %H:%M")

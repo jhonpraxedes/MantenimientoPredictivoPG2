@@ -27,12 +27,16 @@ export interface Maquinaria {
   ubicacion: string | null;
   estado: EstadoMaquinaria;
   fecha_registro: string;
+  /** Si no es null, la máquina tiene imagen guardada */
+  imagen_tipo: string | null;
 }
 
-/** Payload para crear una nueva máquina (POST /api/v1/maquinaria/) */
+/**
+ * Payload para crear o editar una máquina.
+ * El código interno NO se envía: lo genera el backend.
+ */
 export interface MaquinariaPayload {
   nombre: string;
-  codigo_interno: string;
   tipo_equipo: string;
   modelo_motor?: string;
   numero_serie?: string;
@@ -63,7 +67,16 @@ export async function listarMaquinaria(
 }
 
 /**
- * Crea una nueva máquina en el sistema.
+ * Obtiene el catálogo de categorías de equipo.
+ */
+export async function listarCategorias(): Promise<string[]> {
+  return request<string[]>(`${API_BASE_URL}/api/v1/maquinaria/categorias`, {
+    method: 'GET',
+  });
+}
+
+/**
+ * Crea una nueva máquina en el sistema (el backend asigna el código).
  *
  * @param payload - Datos de la máquina a crear
  */
@@ -105,6 +118,7 @@ export async function desactivarMaquinaria(id: number): Promise<Maquinaria> {
     },
   );
 }
+
 /**
  * Reactiva una máquina previamente desactivada.
  *
@@ -117,4 +131,39 @@ export async function activarMaquinaria(id: number): Promise<Maquinaria> {
       method: 'PATCH',
     },
   );
+}
+
+/**
+ * Sube (o reemplaza) la imagen de una máquina.
+ * El campo del formulario se llama "archivo", igual que en el backend.
+ *
+ * @param id - ID de la máquina
+ * @param archivo - Archivo JPG, PNG o WebP (máx. 2 MB)
+ */
+export async function subirImagenMaquinaria(
+  id: number,
+  archivo: File,
+): Promise<Maquinaria> {
+  const formData = new FormData();
+  formData.append('archivo', archivo);
+
+  return request<Maquinaria>(`${API_BASE_URL}/api/v1/maquinaria/${id}/imagen`, {
+    method: 'POST',
+    data: formData,
+    skipErrorHandler: true,
+  });
+}
+
+/**
+ * Descarga la imagen de una máquina como Blob. Se pide con el token porque
+ * el endpoint requiere sesión (una etiqueta <img> no puede enviarlo).
+ *
+ * @param id - ID de la máquina
+ */
+export async function obtenerImagenMaquinaria(id: number): Promise<Blob> {
+  return request<Blob>(`${API_BASE_URL}/api/v1/maquinaria/${id}/imagen`, {
+    method: 'GET',
+    responseType: 'blob',
+    skipErrorHandler: true,
+  });
 }

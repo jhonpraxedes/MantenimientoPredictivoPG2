@@ -4,8 +4,8 @@ Modelo SQLAlchemy para la entidad Maquinaria.
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Enum, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, DateTime, Enum, Integer, LargeBinary, String
+from sqlalchemy.orm import deferred, relationship
 
 from app.db.base import Base
 
@@ -31,7 +31,11 @@ class Maquinaria(Base):
         nullable=False,
     )
     fecha_registro = Column(DateTime, default=datetime.utcnow)
-
+    
+    # Imagen opcional del equipo. "deferred" evita cargar los bytes en cada
+    # listado; solo se leen cuando se pide la imagen explícitamente.
+    imagen = deferred(Column(LargeBinary, nullable=True))
+    imagen_tipo = Column(String(50), nullable=True)  # ej. "image/png"
     # Relación inversa: lecturas asociadas a esta máquina
     lecturas = relationship("LecturaSensor", back_populates="maquinaria")
     alertas = relationship("Alerta", back_populates="maquinaria", cascade="all, delete-orphan")

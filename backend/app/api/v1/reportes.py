@@ -9,6 +9,7 @@ Endpoints:
   GET /api/v1/reportes/historico-diagnosticos   – Historial de lecturas de una máquina.
 """
 
+import traceback
 from datetime import date, datetime, time
 from typing import Optional
 
@@ -29,10 +30,6 @@ router = APIRouter(prefix="/reportes", tags=["reportes"])
 
 _require_admin_o_supervisor = Depends(require_role(Rol.administrador, Rol.supervisor))
 
-
-# ─────────────────────────────────────────────
-# GET /reportes/estado-operativo
-# ─────────────────────────────────────────────
 
 @router.get("/estado-operativo")
 def reporte_estado_operativo(
@@ -65,7 +62,9 @@ def reporte_estado_operativo(
 
     try:
         pdf_bytes = generar_reporte_estado_operativo(maquinarias, alertas_por_maquinaria)
-    except RuntimeError:
+    except RuntimeError as e:
+        # Registra la causa real en el servidor; el usuario solo ve el mensaje genérico
+        traceback.print_exception(e.__cause__ or e)
         raise HTTPException(
             status_code=500,
             detail="No fue posible compilar el reporte; intente nuevamente",
@@ -79,10 +78,6 @@ def reporte_estado_operativo(
         },
     )
 
-
-# ─────────────────────────────────────────────
-# GET /reportes/historico-diagnosticos
-# ─────────────────────────────────────────────
 
 @router.get("/historico-diagnosticos")
 def reporte_historico_diagnosticos(
@@ -124,7 +119,8 @@ def reporte_historico_diagnosticos(
 
     try:
         pdf_bytes = generar_reporte_historico(maquina, lecturas, alertas)
-    except RuntimeError:
+    except RuntimeError as e:
+        traceback.print_exception(e.__cause__ or e)
         raise HTTPException(
             status_code=500,
             detail="No fue posible compilar el reporte; intente nuevamente",
