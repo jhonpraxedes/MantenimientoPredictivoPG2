@@ -9,7 +9,7 @@
 
 import { history, RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { message } from 'antd';
-import esES from 'antd/locale/es_ES';
+
 import {
   clearToken,
   getCurrentUser,
@@ -213,8 +213,3 @@ menuHeaderRender: () => (
     // Las rutas con layout: false en config/routes.ts se excluyen automáticamente.
   };
 };
-export function antd(memo: any) {
-  memo.configProvider = memo.configProvider || {};
-  memo.configProvider.locale = esES;
-  return memo;
-}

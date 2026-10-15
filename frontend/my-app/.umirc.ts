@@ -69,5 +69,10 @@ export default defineConfig({
     icon: 'FilePdfOutlined',
   },
   ],
-  npmClient: 'pnpm', locale: false,
+  npmClient: 'pnpm',
+  locale: {
+    default: 'es-ES',
+    antd: true,
+    baseNavigator: false,
+  },
 });
