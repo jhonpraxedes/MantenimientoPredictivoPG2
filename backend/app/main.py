@@ -1,6 +1,8 @@
 """
 Punto de entrada principal de la aplicación FastAPI.
 """
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import usuarios, reportes
@@ -17,11 +19,31 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------------------
-# CORS — ajusta origins según tu entorno
+# CORS
+# Los orígenes permitidos se leen de la variable de entorno CORS_ORIGINS
+# (lista separada por comas). Si no existe, se permiten solo los orígenes
+# de desarrollo local.
+#
+# Ejemplo en producción:
+#   CORS_ORIGINS=https://mi-sistema.netlify.app
 # ---------------------------------------------------------------------------
+_ORIGENES_LOCALES = [
+    "http://localhost:8000",
+    "http://localhost:8001",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8001",
+]
+
+_cors_env = os.environ.get("CORS_ORIGINS", "").strip()
+ALLOWED_ORIGINS: list[str] = (
+    [o.strip().rstrip("/") for o in _cors_env.split(",") if o.strip()]
+    if _cors_env
+    else _ORIGENES_LOCALES
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # restringe en producción a los dominios permitidos
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
