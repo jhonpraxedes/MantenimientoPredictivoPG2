@@ -2,20 +2,23 @@
 app/api/v1/usuarios.py
 
 Router de administración de usuarios.
-Todos los endpoints requieren rol 'administrador'.
+Casi todos los endpoints requieren rol 'administrador'.
 
 Endpoints:
-  POST /api/v1/usuarios/          – Crea un nuevo usuario.
-  GET  /api/v1/usuarios/          – Lista todos los usuarios.
-  PUT  /api/v1/usuarios/{id}      – Actualiza nombre / rol / activo de un usuario.
+  POST  /api/v1/usuarios/               – Crea un nuevo usuario.
+  GET   /api/v1/usuarios/               – Lista todos los usuarios.
+  PUT   /api/v1/usuarios/{id}           – Actualiza nombre / rol / activo de un usuario.
+  PATCH /api/v1/usuarios/me/password    – Cualquier usuario cambia su propia contraseña.
+  PATCH /api/v1/usuarios/{id}/password  – El administrador restablece la contraseña de otro.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.deps import CurrentUser, DbSession, require_role
 from app.models.usuario import Rol, Usuario
+from app.schemas.password import CambiarPasswordIn, ResetPasswordIn
 from app.schemas.usuario_admin import (
     UsuarioCreateAdmin,
     UsuarioListOut,
@@ -118,3 +121,62 @@ def actualizar_usuario(
     db.commit()
     db.refresh(usuario)
     return usuario
+
+
+# ─────────────────────────────────────────────
+# PATCH /usuarios/me/password   – Cambiar la propia contraseña
+# (debe ir ANTES de /{id}/password)
+# ─────────────────────────────────────────────
+
+@router.patch("/me/password")
+def cambiar_mi_password(
+    payload: CambiarPasswordIn,
+    db: DbSession,
+    current_user: Usuario = Depends(
+        require_role(Rol.administrador, Rol.supervisor, Rol.tecnico)
+    ),
+) -> dict[str, str]:
+    """
+    Cualquier usuario autenticado cambia su propia contraseña.
+    - 400 si la contraseña actual es incorrecta.
+    - 400 si la nueva es igual a la actual.
+    """
+    if not verify_password(payload.password_actual, current_user.password_hash):
+        raise HTTPException(
+            status_code=400,
+            detail="La contraseña actual es incorrecta",
+        )
+
+    if payload.password_actual == payload.password_nueva:
+        raise HTTPException(
+            status_code=400,
+            detail="La nueva contraseña debe ser distinta de la actual",
+        )
+
+    current_user.password_hash = hash_password(payload.password_nueva)
+    db.commit()
+    return {"detail": "Contraseña actualizada correctamente"}
+
+
+# ─────────────────────────────────────────────
+# PATCH /usuarios/{id}/password   – Restablecer contraseña de otro usuario
+# ─────────────────────────────────────────────
+
+@router.patch("/{id}/password")
+def restablecer_password(
+    id: int,
+    payload: ResetPasswordIn,
+    db: DbSession,
+    current_user: Usuario = Depends(require_role(Rol.administrador)),
+) -> dict[str, str]:
+    """
+    El administrador establece una nueva contraseña para cualquier usuario.
+    - 404 si el usuario no existe.
+    """
+    usuario = db.query(Usuario).filter(Usuario.id == id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    usuario.password_hash = hash_password(payload.password_nueva)
+    db.commit()
+    return {"detail": "Contraseña restablecida correctamente"}

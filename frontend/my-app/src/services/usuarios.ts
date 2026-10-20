@@ -88,3 +88,49 @@ export async function actualizarUsuario(
     skipErrorHandler: true,
   });
 }
+
+
+// ─────────────────────────────────────────────
+// Contraseñas
+// ─────────────────────────────────────────────
+
+/** Payload para que el propio usuario cambie su contraseña */
+export interface CambiarPasswordPayload {
+  password_actual: string;
+  password_nueva: string;
+}
+
+/**
+ * El usuario autenticado cambia su propia contraseña.
+ * PATCH /api/v1/usuarios/me/password
+ */
+export async function cambiarMiPassword(
+  payload: CambiarPasswordPayload,
+): Promise<{ detail: string }> {
+  return request<{ detail: string }>(
+    `${API_BASE_URL}/api/v1/usuarios/me/password`,
+    {
+      method: 'PATCH',
+      data: payload,
+      skipErrorHandler: true,
+    },
+  );
+}
+
+/**
+ * El administrador restablece la contraseña de otro usuario.
+ * PATCH /api/v1/usuarios/{id}/password
+ */
+export async function restablecerPassword(
+  id: number,
+  password_nueva: string,
+): Promise<{ detail: string }> {
+  return request<{ detail: string }>(
+    `${API_BASE_URL}/api/v1/usuarios/${id}/password`,
+    {
+      method: 'PATCH',
+      data: { password_nueva },
+      skipErrorHandler: true,
+    },
+  );
+}

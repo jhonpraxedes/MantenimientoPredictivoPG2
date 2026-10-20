@@ -60,14 +60,21 @@ export default defineConfig({
     component: './Usuarios',
     access: 'esAdministrador',
     icon: 'TeamOutlined',
-  },
-  {
+    },
+    {
     name: 'Reportes',
     path: '/reportes',
     component: './Reportes',
     access: 'esAdminOSupervisor',
     icon: 'FilePdfOutlined',
-  },
+    },
+    {
+    name: 'Mi cuenta',
+    path: '/perfil',
+    component: './Perfil',
+    access: 'estaAutenticado',
+    hideInMenu: true,
+    },
   ],
   npmClient: 'pnpm',
   locale: {

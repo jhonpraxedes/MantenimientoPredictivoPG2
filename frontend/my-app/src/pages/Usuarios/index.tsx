@@ -7,7 +7,8 @@
  * Funcionalidades:
  *  - Tabla con todos los usuarios (nombre, email, rol con Tag, estado con Tag).
  *  - Modal "Nuevo usuario": crea un usuario con nombre, email, password y rol.
- *  - Modal "Editar usuario": cambia nombre, rol y activo del usuario seleccionado.
+ *  - Modal "Editar usuario": cambia nombre, rol y activo del usuario seleccionado,
+ *    y opcionalmente restablece su contraseña.
  *    El Select de rol queda deshabilitado si la fila es el usuario logueado
  *    (restricción visual que espeja la del backend).
  */
@@ -35,6 +36,7 @@ import {
   actualizarUsuario,
   crearUsuario,
   listarUsuarios,
+  restablecerPassword,
   RolAdmin,
   UsuarioAdmin,
   UsuarioCreatePayload,
@@ -98,7 +100,12 @@ const SelectRolConTooltip: React.FC<SelectRolProps> = ({
 // Tipos de formulario
 // ─────────────────────────────────────────────
 type FormCrear  = UsuarioCreatePayload;
-type FormEditar = { nombre: string; rol: RolAdmin; activo: boolean };
+type FormEditar = {
+  nombre: string;
+  rol: RolAdmin;
+  activo: boolean;
+  password_nueva?: string;
+};
 
 // ─────────────────────────────────────────────
 // Componente principal
@@ -160,7 +167,12 @@ const UsuariosPage: React.FC = () => {
   // ── Abrir modal de edición ─────────────────────────────
   const abrirEditar = (usuario: UsuarioAdmin): void => {
     setUsuarioEditar(usuario);
-    formEditar.setFieldsValue({ nombre: usuario.nombre, rol: usuario.rol, activo: usuario.activo });
+    formEditar.setFieldsValue({
+      nombre: usuario.nombre,
+      rol: usuario.rol,
+      activo: usuario.activo,
+      password_nueva: undefined,
+    });
     setModalEditarVisible(true);
   };
 
@@ -175,6 +187,12 @@ const UsuariosPage: React.FC = () => {
         activo: values.activo,
       };
       await actualizarUsuario(usuarioEditar.id, payload);
+
+      // Contraseña opcional: solo se restablece si el administrador escribió una
+      if (values.password_nueva) {
+        await restablecerPassword(usuarioEditar.id, values.password_nueva);
+      }
+
       message.success('Usuario actualizado correctamente.');
       setModalEditarVisible(false);
       setUsuarioEditar(null);
@@ -388,6 +406,20 @@ const UsuariosPage: React.FC = () => {
 
           <Form.Item name="activo" label="Estado" valuePropName="checked">
             <Switch checkedChildren="Activo" unCheckedChildren="Inactivo" />
+          </Form.Item>
+
+          <Form.Item
+            name="password_nueva"
+            label="Nueva contraseña (opcional)"
+            extra="Déjalo vacío para no cambiarla."
+            rules={[
+              { min: 8, message: 'La contraseña debe tener al menos 8 caracteres.' },
+            ]}
+          >
+            <Input.Password
+              placeholder="Mínimo 8 caracteres"
+              autoComplete="new-password"
+            />
           </Form.Item>
         </Form>
       </Modal>

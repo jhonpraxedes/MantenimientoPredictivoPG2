@@ -8,7 +8,7 @@
  */
 
 import { history, RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { message } from 'antd';
+import { Dropdown, message } from 'antd';
 
 import {
   clearToken,
@@ -164,41 +164,52 @@ menuHeaderRender: () => (
     },
 
     // ── Menú de avatar (esquina superior derecha) ──
-    avatarProps: currentUser
+        avatarProps: currentUser
       ? {
           src: undefined, // sin avatar de foto; muestra iniciales
           title: currentUser.nombre,
           size: 'small',
           render: (_props, dom) => (
-            <span style={{ cursor: 'pointer' }}>
-              {dom}
-              <span
-                style={{
-                  marginLeft: 8,
-                  fontSize: 12,
-                  color: 'rgba(0,0,0,0.45)',
-                }}
-              >
-                {etiquetaRol[currentUser.rol] ?? currentUser.rol}
+            <Dropdown
+              trigger={['click']}
+              placement="topLeft"
+              menu={{
+                items: [
+                  {
+                    key: 'perfil',
+                    label: 'Cambiar contraseña',
+                    onClick: () => history.push('/perfil'),
+                  },
+                  {
+                    key: 'logout',
+                    label: 'Cerrar sesión',
+                    onClick: async () => {
+                      clearToken();
+                      await setInitialState((s: InitialState | undefined) => ({
+                        ...s,
+                        currentUser: undefined,
+                      }));
+                      message.success('Sesión cerrada correctamente.');
+                      history.push('/login');
+                    },
+                  },
+                ],
+              }}
+            >
+              <span style={{ cursor: 'pointer' }}>
+                {dom}
+                <span
+                  style={{
+                    marginLeft: 8,
+                    fontSize: 12,
+                    color: 'rgba(0,0,0,0.45)',
+                  }}
+                >
+                  {etiquetaRol[currentUser.rol] ?? currentUser.rol}
+                </span>
               </span>
-            </span>
+            </Dropdown>
           ),
-          menuItems: [
-            {
-              key: 'logout',
-              icon: '🔒',
-              label: 'Cerrar sesión',
-              onClick: async () => {
-                clearToken();
-                await setInitialState((s: InitialState | undefined) => ({
-                  ...s,
-                  currentUser: undefined,
-                }));
-                message.success('Sesión cerrada correctamente.');
-                history.push('/login');
-              },
-            },
-          ],
         }
       : undefined,
 
