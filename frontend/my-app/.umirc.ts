@@ -77,6 +77,7 @@ export default defineConfig({
     },
   ],
   npmClient: 'pnpm',
+  esbuildMinifyIIFE: true,
   locale: {
     default: 'es-ES',
     antd: true,

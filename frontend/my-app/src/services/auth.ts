@@ -11,7 +11,12 @@ import { request } from '@umijs/max';
 // ─────────────────────────────────────────────
 // Constante de base URL del backend
 // ─────────────────────────────────────────────
-export const API_BASE_URL = 'http://127.0.0.1:8000';
+//export const API_BASE_URL = 'http://127.0.0.1:8000';
+
+// En producción se define UMI_APP_API_BASE_URL (Netlify). En local usa el valor por defecto.
+export const API_BASE_URL: string = (
+  process.env.UMI_APP_API_BASE_URL || 'http://127.0.0.1:8000'
+).replace(/\/+$/, '');
 
 // ─────────────────────────────────────────────
 // Interfaces TypeScript
